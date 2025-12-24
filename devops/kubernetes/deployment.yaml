@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hello-devops
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-devops-deployment
+  namespace: hello-devops
+  labels:
+    app: hello-devops
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: hello-devops
+  template:
+    metadata:
+      labels:
+        app: hello-devops
+    spec:
+      containers:
+      - name: hello-devops
+        image: busybox
+        command: ["sh", "-c"]
+        args:
+        - |
+          echo "Starting Hello DevOps Pod...";
+          while true; do
+            echo "$(date): Hello, DevOps World from Kubernetes Pod: $HOSTNAME";
+            sleep 30;
+          done
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+        env:
+        - name: ENVIRONMENT
+          value: "kubernetes"
+        - name: VERSION
+          value: "1.0.0"

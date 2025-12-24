@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-devops-service
+  namespace: hello-devops
+spec:
+  selector:
+    app: hello-devops
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hello-devops-config
+  namespace: hello-devops
+data:
+  message: "Hello, DevOps World from ConfigMap!"
+  environment: "kubernetes"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hello-devops-secret
+  namespace: hello-devops
+type: Opaque
+data:
+  api-key: aGVsbG8tZGV2b3BzLWFwaS1rZXk=  # base64 encoded "hello-devops-api-key"

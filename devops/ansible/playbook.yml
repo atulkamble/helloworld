@@ -1,0 +1,114 @@
+---
+- name: Hello DevOps Ansible Playbook
+  hosts: localhost
+  gather_facts: yes
+  vars:
+    message: "Hello, DevOps World from Ansible!"
+    app_name: "hello-devops"
+    app_port: 8080
+    
+  tasks:
+    - name: Display welcome message
+      debug:
+        msg: "{{ message }}"
+        
+    - name: Show system information
+      debug:
+        msg: |
+          System: {{ ansible_system }}
+          Architecture: {{ ansible_architecture }}
+          Distribution: {{ ansible_distribution }}
+          Version: {{ ansible_distribution_version }}
+          
+    - name: Create application directory
+      file:
+        path: /tmp/{{ app_name }}
+        state: directory
+        mode: '0755'
+        
+    - name: Create Hello DevOps HTML file
+      copy:
+        content: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Hello DevOps</title>
+              <style>
+                  body { font-family: Arial, sans-serif; text-align: center; margin: 50px; }
+                  .container { background: linear-gradient(45deg, #667eea 0%, #764ba2 100%); 
+                              color: white; padding: 50px; border-radius: 10px; }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <h1>{{ message }}</h1>
+                  <p>Deployed with Ansible on {{ ansible_date_time.date }}</p>
+                  <p>Host: {{ ansible_hostname }}</p>
+                  <p>Architecture: {{ ansible_architecture }}</p>
+              </div>
+          </body>
+          </html>
+        dest: /tmp/{{ app_name }}/index.html
+        mode: '0644'
+        
+    - name: Create simple Python web server script
+      copy:
+        content: |
+          #!/usr/bin/env python3
+          import http.server
+          import socketserver
+          import os
+          
+          PORT = {{ app_port }}
+          os.chdir('/tmp/{{ app_name }}')
+          
+          Handler = http.server.SimpleHTTPRequestHandler
+          
+          with socketserver.TCPServer(("", PORT), Handler) as httpd:
+              print(f"Server running at http://localhost:{PORT}")
+              httpd.serve_forever()
+        dest: /tmp/{{ app_name }}/server.py
+        mode: '0755'
+        
+    - name: Display deployment info
+      debug:
+        msg: |
+          ✅ Hello DevOps deployed successfully!
+          📁 Files created in: /tmp/{{ app_name }}
+          🌐 To start server: python3 /tmp/{{ app_name }}/server.py
+          🔗 Then visit: http://localhost:{{ app_port }}
+          
+    - name: Create systemd service file (if running as root)
+      copy:
+        content: |
+          [Unit]
+          Description=Hello DevOps Python Server
+          After=network.target
+          
+          [Service]
+          Type=simple
+          User=nobody
+          WorkingDirectory=/tmp/{{ app_name }}
+          ExecStart=/usr/bin/python3 /tmp/{{ app_name }}/server.py
+          Restart=always
+          
+          [Install]
+          WantedBy=multi-user.target
+        dest: /tmp/{{ app_name }}/hello-devops.service
+        mode: '0644'
+      when: ansible_user_id == "root"
+      
+    - name: Show final instructions
+      debug:
+        msg: |
+          🎉 Ansible deployment complete!
+          
+          Next steps:
+          1. cd /tmp/{{ app_name }}
+          2. python3 server.py
+          3. Open http://localhost:{{ app_port }}
+          
+          Or for systemd service (as root):
+          sudo cp hello-devops.service /etc/systemd/system/
+          sudo systemctl enable hello-devops
+          sudo systemctl start hello-devops

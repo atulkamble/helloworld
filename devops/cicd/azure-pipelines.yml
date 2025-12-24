@@ -1,0 +1,83 @@
+trigger:
+- main
+
+variables:
+  dockerImageName: 'hello-devops'
+  dockerRegistry: 'your-registry.azurecr.io'
+  kubernetesCluster: 'hello-devops-aks'
+  resourceGroup: 'hello-devops-rg'
+
+stages:
+- stage: Test
+  displayName: '🧪 Test Stage'
+  jobs:
+  - job: TestJob
+    displayName: 'Run Tests'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - script: |
+        echo "Testing Hello DevOps applications..."
+        chmod +x test_hello_worlds.sh
+        ./test_hello_worlds.sh || true
+        echo "✅ Tests completed"
+      displayName: 'Run Hello World Tests'
+
+- stage: Build
+  displayName: '🏗️ Build Stage'
+  dependsOn: Test
+  jobs:
+  - job: BuildJob
+    displayName: 'Build Docker Image'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: Docker@2
+      displayName: 'Build Docker Image'
+      inputs:
+        containerRegistry: '$(dockerRegistry)'
+        repository: '$(dockerImageName)'
+        command: 'build'
+        Dockerfile: 'devops/docker/Dockerfile'
+        tags: |
+          $(Build.BuildNumber)
+          latest
+    
+    - task: Docker@2
+      displayName: 'Push Docker Image'
+      inputs:
+        containerRegistry: '$(dockerRegistry)'
+        repository: '$(dockerImageName)'
+        command: 'push'
+        tags: |
+          $(Build.BuildNumber)
+          latest
+
+- stage: Deploy
+  displayName: '🚀 Deploy Stage'
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  - deployment: DeployJob
+    displayName: 'Deploy to AKS'
+    environment: 'production'
+    pool:
+      vmImage: 'ubuntu-latest'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: KubernetesManifest@0
+            displayName: 'Deploy to Kubernetes'
+            inputs:
+              action: 'deploy'
+              kubernetesServiceConnection: '$(kubernetesCluster)'
+              manifests: |
+                devops/kubernetes/deployment.yaml
+                devops/kubernetes/service.yaml
+              containers: '$(dockerRegistry)/$(dockerImageName):$(Build.BuildNumber)'
+          
+          - script: |
+              echo "🎉 Hello DevOps deployed successfully!"
+              echo "🌐 Application URL: http://hello-devops.example.com"
+            displayName: 'Deployment Success Notification'

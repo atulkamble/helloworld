@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "hello-devops.fullname" . }}-config
+  labels:
+    {{- include "hello-devops.labels" . | nindent 4 }}
+data:
+  message: {{ .Values.configMap.message | quote }}
+  environment: {{ .Values.configMap.environment | quote }}

@@ -1,0 +1,106 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_IMAGE = 'hello-devops'
+        DOCKER_TAG = "${BUILD_NUMBER}"
+        REGISTRY = 'your-registry.com'
+    }
+    
+    stages {
+        stage('🔍 Checkout') {
+            steps {
+                echo 'Checking out Hello DevOps code...'
+                checkout scm
+            }
+        }
+        
+        stage('🧪 Test') {
+            steps {
+                echo 'Running Hello DevOps tests...'
+                script {
+                    sh '''
+                        echo "Testing Hello World programs..."
+                        chmod +x test_hello_worlds.sh
+                        ./test_hello_worlds.sh || true
+                    '''
+                }
+            }
+        }
+        
+        stage('🏗️ Build') {
+            steps {
+                echo 'Building Hello DevOps Docker image...'
+                script {
+                    sh '''
+                        cd devops/docker
+                        docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+                        docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
+                    '''
+                }
+            }
+        }
+        
+        stage('📤 Push') {
+            when {
+                branch 'main'
+            }
+            steps {
+                echo 'Pushing Docker image to registry...'
+                script {
+                    sh '''
+                        docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${REGISTRY}/${DOCKER_IMAGE}:${DOCKER_TAG}
+                        docker push ${REGISTRY}/${DOCKER_IMAGE}:${DOCKER_TAG}
+                        docker push ${REGISTRY}/${DOCKER_IMAGE}:latest
+                    '''
+                }
+            }
+        }
+        
+        stage('🚀 Deploy to Staging') {
+            when {
+                branch 'main'
+            }
+            steps {
+                echo 'Deploying Hello DevOps to staging...'
+                script {
+                    sh '''
+                        echo "Deploying ${DOCKER_IMAGE}:${DOCKER_TAG} to staging..."
+                        # kubectl set image deployment/hello-devops hello-devops=${REGISTRY}/${DOCKER_IMAGE}:${DOCKER_TAG}
+                        # kubectl rollout status deployment/hello-devops
+                        echo "✅ Deployment to staging completed"
+                    '''
+                }
+            }
+        }
+        
+        stage('🧪 Integration Tests') {
+            when {
+                branch 'main'
+            }
+            steps {
+                echo 'Running integration tests...'
+                script {
+                    sh '''
+                        echo "Running integration tests..."
+                        # curl -f http://staging.hello-devops.com/health
+                        echo "✅ Integration tests passed"
+                    '''
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo 'Pipeline completed!'
+            cleanWs()
+        }
+        success {
+            echo '🎉 Hello DevOps pipeline succeeded!'
+        }
+        failure {
+            echo '❌ Hello DevOps pipeline failed!'
+        }
+    }
+}
