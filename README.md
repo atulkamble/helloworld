@@ -1,5 +1,11 @@
 **Hello World programs for the major languages of 2025** you listed, along with **commands to run them on an Amazon EC2 (Amazon Linux 2023)** instance.
 
+# https://github.com/atulkamble/pythonhelloworld
+# https://github.com/atulkamble/gohelloworld
+# https://github.com/atulkamble/javahelloworld
+# https://github.com/atulkamble/dotnethelloworld
+
+
 ---
 
 ## 📦 Pre-requisites:
