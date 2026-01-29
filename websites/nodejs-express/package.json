@@ -1,0 +1,23 @@
+{
+  "name": "nodejs-express",
+  "version": "1.0.0",
+  "description": "webapp",
+  "homepage": "https://github.com/atulkamble/helloworld#readme",
+  "bugs": {
+    "url": "https://github.com/atulkamble/helloworld/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atulkamble/helloworld.git"
+  },
+  "license": "ISC",
+  "author": "Atul Kamble",
+  "type": "commonjs",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
